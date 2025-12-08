@@ -23,8 +23,30 @@ const tones = [
 ];
 
 const CampaignBuilderPage = () => {
-  const [subject, setSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
+  const [subject, setSubject] = useState("🚀 Exclusive: Your Early Access to Our New Features!");
+  const [emailBody, setEmailBody] = useState(`Dear Valued Customer,
+
+We're thrilled to share some exciting news with you! As one of our most valued members, you're getting exclusive early access to our latest platform updates.
+
+Here's what's new:
+
+✨ Smart Analytics Dashboard - Real-time insights at your fingertips
+🚀 AI-Powered Recommendations - Personalized suggestions to boost your results  
+📊 Advanced Reporting - Export detailed reports in multiple formats
+🔒 Enhanced Security - Two-factor authentication now available
+
+As a thank you for your loyalty, we're offering you 30% off your next month when you try these new features before anyone else.
+
+Ready to explore? Click the button below to get started:
+
+[Get Early Access Now]
+
+If you have any questions, our support team is here to help 24/7.
+
+Best regards,
+The Inbox'd Team
+
+P.S. This exclusive offer expires in 7 days - don't miss out!`);
   const [selectedAudience, setSelectedAudience] = useState("all");
   const [selectedTone, setSelectedTone] = useState("professional");
   const [isGenerating, setIsGenerating] = useState(false);
