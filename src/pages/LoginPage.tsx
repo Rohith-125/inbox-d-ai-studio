@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,9 +231,9 @@ const LoginPage = () => {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <a href="#" className="text-primary hover:underline font-medium">
-                Start free trial
-              </a>
+              <Link to="/signup" className="text-primary hover:underline font-medium">
+                Create account
+              </Link>
             </p>
           </div>
         </div>

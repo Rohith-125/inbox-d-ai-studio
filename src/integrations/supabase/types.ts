@@ -14,7 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campaigns: {
+        Row: {
+          audience_filter: Json | null
+          body: string
+          created_at: string
+          id: string
+          name: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["campaign_status"] | null
+          subject: string
+          tone: Database["public"]["Enums"]["email_tone"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience_filter?: Json | null
+          body: string
+          created_at?: string
+          id?: string
+          name: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"] | null
+          subject: string
+          tone?: Database["public"]["Enums"]["email_tone"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience_filter?: Json | null
+          body?: string
+          created_at?: string
+          id?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"] | null
+          subject?: string
+          tone?: Database["public"]["Enums"]["email_tone"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          email: string
+          id: string
+          name: string
+          tags: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          email: string
+          id?: string
+          name: string
+          tags?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string
+          id?: string
+          name?: string
+          tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_events: {
+        Row: {
+          created_at: string
+          email_send_id: string
+          event_type: Database["public"]["Enums"]["email_event_type"]
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string
+          email_send_id: string
+          event_type: Database["public"]["Enums"]["email_event_type"]
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string
+          email_send_id?: string
+          event_type?: Database["public"]["Enums"]["email_event_type"]
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_email_send_id_fkey"
+            columns: ["email_send_id"]
+            isOneToOne: false
+            referencedRelation: "email_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_sends: {
+        Row: {
+          campaign_id: string
+          clicked_at: string | null
+          created_at: string
+          customer_id: string
+          error_message: string | null
+          id: string
+          opened_at: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["email_send_status"] | null
+        }
+        Insert: {
+          campaign_id: string
+          clicked_at?: string | null
+          created_at?: string
+          customer_id: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_send_status"] | null
+        }
+        Update: {
+          campaign_id?: string
+          clicked_at?: string | null
+          created_at?: string
+          customer_id?: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["email_send_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_sends_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +207,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      campaign_status: "draft" | "scheduled" | "sending" | "sent"
+      email_event_type: "open" | "click"
+      email_send_status: "pending" | "sent" | "delivered" | "bounced" | "failed"
+      email_tone: "professional" | "friendly" | "urgent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +337,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      campaign_status: ["draft", "scheduled", "sending", "sent"],
+      email_event_type: ["open", "click"],
+      email_send_status: ["pending", "sent", "delivered", "bounced", "failed"],
+      email_tone: ["professional", "friendly", "urgent"],
+    },
   },
 } as const
