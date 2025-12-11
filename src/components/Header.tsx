@@ -2,6 +2,8 @@ import { Bell, Search, LogOut, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface HeaderProps {
   title: string;
@@ -11,9 +13,14 @@ interface HeaderProps {
 const Header = ({ title, subtitle }: HeaderProps) => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    navigate("/");
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to logout");
+    } else {
+      toast.success("Logged out successfully");
+      navigate("/");
+    }
   };
 
   return (
@@ -42,7 +49,7 @@ const Header = ({ title, subtitle }: HeaderProps) => {
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
               <User size={18} className="text-primary-foreground" />
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
               <LogOut size={18} />
             </Button>
           </div>
