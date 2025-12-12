@@ -19,7 +19,10 @@ export type Database = {
           audience_filter: Json | null
           body: string
           created_at: string
+          cta_link: string | null
+          cta_text: string | null
           id: string
+          image_url: string | null
           name: string
           scheduled_at: string | null
           sent_at: string | null
@@ -33,7 +36,10 @@ export type Database = {
           audience_filter?: Json | null
           body: string
           created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
           id?: string
+          image_url?: string | null
           name: string
           scheduled_at?: string | null
           sent_at?: string | null
@@ -47,7 +53,10 @@ export type Database = {
           audience_filter?: Json | null
           body?: string
           created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
           id?: string
+          image_url?: string | null
           name?: string
           scheduled_at?: string | null
           sent_at?: string | null
