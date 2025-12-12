@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Send, Sparkles, Clock, Users, Zap, ChevronDown, Loader2, Check, Upload } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -23,33 +23,18 @@ const tones = [
 
 const CampaignBuilderPage = () => {
   const navigate = useNavigate();
-  const [subject, setSubject] = useState("🚀 Exclusive: Your Early Access to Our New Features!");
-  const [emailBody, setEmailBody] = useState(`Dear {{name}},
-
-We're thrilled to share some exciting news with you! As one of our most valued members, you're getting exclusive early access to our latest platform updates.
-
-Here's what's new:
-
-✨ Smart Analytics Dashboard - Real-time insights at your fingertips
-🚀 AI-Powered Recommendations - Personalized suggestions to boost your results  
-📊 Advanced Reporting - Export detailed reports in multiple formats
-🔒 Enhanced Security - Two-factor authentication now available
-
-As a thank you for your loyalty, we're offering you 30% off your next month when you try these new features before anyone else.
-
-Ready to explore? Click the button below to get started:
-
-[Get Early Access Now]
-
-If you have any questions, our support team is here to help 24/7.
-
-Best regards,
-The Inbox'd Team
-
-P.S. This exclusive offer expires in 7 days - don't miss out!`);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [subject, setSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [selectedTone, setSelectedTone] = useState("professional");
+  const [ctaText, setCtaText] = useState("");
+  const [ctaLink, setCtaLink] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
@@ -67,12 +52,54 @@ P.S. This exclusive offer expires in 7 days - don't miss out!`);
 
       if (error) throw error;
       setCustomers(data || []);
-      // Select all customers by default
       setSelectedCustomers((data || []).map(c => c.id));
     } catch (error) {
       console.error("Error fetching customers:", error);
     } finally {
       setIsLoadingCustomers(false);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("campaign-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("campaign-images")
+        .getPublicUrl(fileName);
+
+      setImageUrl(publicUrl);
+      toast.success("Image uploaded successfully");
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -83,62 +110,70 @@ P.S. This exclusive offer expires in 7 days - don't miss out!`);
     }
 
     setIsGenerating(true);
-    
-    // Simulate AI generation
-    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    const toneMessages: Record<string, string> = {
-      professional: `Dear {{name}},
+    try {
+      const response = await supabase.functions.invoke("generate-email", {
+        body: {
+          subject,
+          tone: selectedTone,
+          ctaText: ctaText || undefined,
+          ctaLink: ctaLink || undefined,
+          imageDescription: imageUrl ? "A promotional image/product banner is included" : undefined,
+        },
+      });
 
-We are pleased to introduce our latest offering that we believe will significantly enhance your experience with our services.
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
-Based on your previous interactions with us, we've identified several key features that align perfectly with your business objectives:
+      if (response.data?.content) {
+        setEmailBody(response.data.content);
+        toast.success("Email content generated with AI!");
+      } else {
+        throw new Error("No content generated");
+      }
+    } catch (error: any) {
+      console.error("Error generating email:", error);
+      toast.error(error.message || "Failed to generate email");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
-• Advanced automation capabilities
-• Real-time analytics dashboard  
-• Seamless integration options
+  const handleSaveDraft = async () => {
+    if (!subject.trim()) {
+      toast.error("Please enter a subject line");
+      return;
+    }
 
-We would be delighted to schedule a personalized demonstration at your earliest convenience.
+    setIsSaving(true);
 
-Best regards,
-The Inbox'd Team`,
-      friendly: `Hey {{name}}! 👋
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-Hope you're having an amazing day! We've been working on something really exciting that we couldn't wait to share with you.
+      const { error } = await supabase
+        .from("campaigns")
+        .insert({
+          name: subject.substring(0, 50),
+          subject,
+          body: emailBody || "",
+          tone: selectedTone as "professional" | "friendly" | "urgent",
+          status: "draft",
+          user_id: user.id,
+          cta_text: ctaText || null,
+          cta_link: ctaLink || null,
+          image_url: imageUrl || null,
+        });
 
-Here's what's new:
-✨ Feature one that you'll love
-🚀 Something that'll save you tons of time
-💡 A smart way to do things better
-
-Can't wait for you to try it out! Hit reply if you have any questions – we're always here to chat.
-
-Cheers,
-Your friends at Inbox'd`,
-      urgent: `⚠️ ACTION REQUIRED - Limited Time Offer
-
-Dear {{name}},
-
-This opportunity expires in 48 hours.
-
-We're offering our most exclusive deal of the year, and you're one of the select few invited to participate.
-
-🔥 ACT NOW:
-→ 50% off for the first 100 responders
-→ Exclusive bonus content included
-→ Priority access to new features
-
-Don't miss out – this offer will NOT be extended.
-
-Click below to claim your spot NOW →
-
-Time is running out,
-The Inbox'd Team`,
-    };
-
-    setEmailBody(toneMessages[selectedTone] || toneMessages.professional);
-    setIsGenerating(false);
-    toast.success("Email content generated with AI!");
+      if (error) throw error;
+      toast.success("Draft saved successfully");
+    } catch (error: any) {
+      console.error("Error saving draft:", error);
+      toast.error(error.message || "Failed to save draft");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLaunchCampaign = async () => {
@@ -158,7 +193,6 @@ The Inbox'd Team`,
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Create campaign
       const { data: campaign, error: campaignError } = await supabase
         .from("campaigns")
         .insert({
@@ -168,22 +202,24 @@ The Inbox'd Team`,
           tone: selectedTone as "professional" | "friendly" | "urgent",
           status: "sending",
           user_id: user.id,
+          cta_text: ctaText || null,
+          cta_link: ctaLink || null,
+          image_url: imageUrl || null,
         })
         .select()
         .single();
 
       if (campaignError) throw campaignError;
 
-      // Get auth session for edge function
-      const { data: { session } } = await supabase.auth.getSession();
-
-      // Call edge function to send emails
       const response = await supabase.functions.invoke("send-campaign-emails", {
         body: {
           campaignId: campaign.id,
           subject,
           body: emailBody,
           customerIds: selectedCustomers,
+          ctaText: ctaText || undefined,
+          ctaLink: ctaLink || undefined,
+          imageUrl: imageUrl || undefined,
         },
       });
 
@@ -193,8 +229,6 @@ The Inbox'd Team`,
 
       const result = response.data;
       toast.success(`Campaign launched! ${result.sent} emails sent, ${result.failed} failed.`);
-      
-      // Navigate to dashboard to see results
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Error launching campaign:", error);
@@ -255,11 +289,7 @@ The Inbox'd Team`,
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleAllCustomers}
-                    >
+                    <Button variant="ghost" size="sm" onClick={toggleAllCustomers}>
                       {selectedCustomers.length === customers.length ? "Deselect All" : "Select All"}
                     </Button>
                     <span className="text-sm text-muted-foreground">
@@ -310,7 +340,90 @@ The Inbox'd Team`,
                     onChange={(e) => setSubject(e.target.value)}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <FileText size={14} />
+                      CTA Button Text
+                    </label>
+                    <Input
+                      placeholder="e.g., Shop Now, Get Started"
+                      value={ctaText}
+                      onChange={(e) => setCtaText(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Link size={14} />
+                      CTA Link URL
+                    </label>
+                    <Input
+                      placeholder="https://your-shop.com/product"
+                      value={ctaLink}
+                      onChange={(e) => setCtaLink(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Image Upload */}
+            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "150ms" }}>
+              <h2 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+                <Image size={20} className="text-primary" />
+                Add Image / Product Banner
+              </h2>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {imageUrl ? (
+                <div className="space-y-4">
+                  <div className="relative rounded-lg overflow-hidden border border-border">
+                    <img src={imageUrl} alt="Campaign" className="w-full max-h-64 object-contain bg-secondary/20" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      Change Image
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setImageUrl("")}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer transition-colors",
+                    "hover:border-primary/50 hover:bg-primary/5",
+                    isUploading && "pointer-events-none opacity-50"
+                  )}
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                  ) : (
+                    <Image className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {isUploading ? "Uploading..." : "Click to upload an image or product banner"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+                </div>
+              )}
             </div>
 
             {/* Tone Selection */}
@@ -375,7 +488,7 @@ The Inbox'd Team`,
               </div>
 
               <textarea
-                placeholder="Write your email content here, or use AI to generate it based on your subject line and selected tone..."
+                placeholder="Write your email content here, or use AI to generate it based on your subject line, CTA, and selected tone..."
                 value={emailBody}
                 onChange={(e) => setEmailBody(e.target.value)}
                 className="w-full h-80 px-4 py-3 rounded-lg border border-border bg-input/50 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200"
@@ -383,7 +496,7 @@ The Inbox'd Team`,
 
               <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
                 <Sparkles size={12} className="text-primary" />
-                Use {"{{name}}"} to personalize with customer's name
+                AI will use subject, CTA, tone, and image context. Use {"{{name}}"} to personalize.
               </div>
             </div>
 
@@ -394,8 +507,20 @@ The Inbox'd Team`,
                   <Clock size={16} />
                   Schedule for Later
                 </Button>
-                <Button variant="glass" disabled>
-                  Save as Draft
+                <Button 
+                  variant="glass" 
+                  onClick={handleSaveDraft}
+                  disabled={isSaving}
+                  className="gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save as Draft"
+                  )}
                 </Button>
               </div>
 

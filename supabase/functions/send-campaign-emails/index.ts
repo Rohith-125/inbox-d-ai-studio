@@ -14,6 +14,9 @@ interface SendCampaignRequest {
   customerIds: string[];
   fromEmail?: string;
   fromName?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  imageUrl?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const { campaignId, subject, body, customerIds, fromEmail, fromName }: SendCampaignRequest = await req.json();
+    const { campaignId, subject, body, customerIds, fromEmail, fromName, ctaText, ctaLink, imageUrl }: SendCampaignRequest = await req.json();
 
     console.log(`Starting campaign ${campaignId} with ${customerIds.length} recipients`);
 
@@ -101,10 +104,26 @@ const handler = async (req: Request): Promise<Response> => {
         // Create tracking pixel URL
         const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email?emailSendId=${emailSend.id}&type=open`;
         
+        // Build image HTML if provided
+        const imageHtml = imageUrl ? `
+          <div style="margin: 20px 0; text-align: center;">
+            <img src="${imageUrl}" alt="Campaign Image" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          </div>
+        ` : '';
+
+        // Build CTA button HTML if provided
+        const ctaHtml = ctaText && ctaLink ? `
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${ctaLink}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">${ctaText}</a>
+          </div>
+        ` : '';
+        
         // Add tracking pixel to email
         const htmlBody = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            ${imageHtml}
             ${personalizedBody.replace(/\n/g, "<br>")}
+            ${ctaHtml}
           </div>
           <img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />
         `;
