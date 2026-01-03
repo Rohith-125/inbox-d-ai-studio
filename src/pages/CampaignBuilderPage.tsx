@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,30 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Customer {
   id: string;
   name: string;
   email: string;
+}
+
+interface DraftData {
+  id: string;
+  subject: string;
+  body: string;
+  tone: string;
+  cta_text: string | null;
+  cta_link: string | null;
+  image_url: string | null;
+  scheduled_at: string | null;
 }
 
 const tones = [
@@ -23,8 +42,10 @@ const tones = [
 
 const CampaignBuilderPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [selectedTone, setSelectedTone] = useState("professional");
@@ -35,13 +56,34 @@ const CampaignBuilderPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+    
+    // Load draft if passed from DraftsPage
+    const draft = location.state?.draft as DraftData | undefined;
+    if (draft) {
+      setDraftId(draft.id);
+      setSubject(draft.subject);
+      setEmailBody(draft.body);
+      setSelectedTone(draft.tone);
+      setCtaText(draft.cta_text || "");
+      setCtaLink(draft.cta_link || "");
+      setImageUrl(draft.image_url || "");
+      if (draft.scheduled_at) {
+        const date = new Date(draft.scheduled_at);
+        setScheduleDate(date.toISOString().split("T")[0]);
+        setScheduleTime(date.toTimeString().slice(0, 5));
+      }
+    }
+  }, [location.state]);
 
   const fetchCustomers = async () => {
     try {
@@ -152,27 +194,119 @@ const CampaignBuilderPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
-        .from("campaigns")
-        .insert({
-          name: subject.substring(0, 50),
-          subject,
-          body: emailBody || "",
-          tone: selectedTone as "professional" | "friendly" | "urgent",
-          status: "draft",
-          user_id: user.id,
-          cta_text: ctaText || null,
-          cta_link: ctaLink || null,
-          image_url: imageUrl || null,
-        });
+      if (draftId) {
+        // Update existing draft
+        const { error } = await supabase
+          .from("campaigns")
+          .update({
+            name: subject.substring(0, 50),
+            subject,
+            body: emailBody || "",
+            tone: selectedTone as "professional" | "friendly" | "urgent",
+            cta_text: ctaText || null,
+            cta_link: ctaLink || null,
+            image_url: imageUrl || null,
+          })
+          .eq("id", draftId);
 
-      if (error) throw error;
-      toast.success("Draft saved successfully");
+        if (error) throw error;
+        toast.success("Draft updated successfully");
+      } else {
+        // Create new draft
+        const { error } = await supabase
+          .from("campaigns")
+          .insert({
+            name: subject.substring(0, 50),
+            subject,
+            body: emailBody || "",
+            tone: selectedTone as "professional" | "friendly" | "urgent",
+            status: "draft",
+            user_id: user.id,
+            cta_text: ctaText || null,
+            cta_link: ctaLink || null,
+            image_url: imageUrl || null,
+          });
+
+        if (error) throw error;
+        toast.success("Draft saved successfully");
+      }
     } catch (error: any) {
       console.error("Error saving draft:", error);
       toast.error(error.message || "Failed to save draft");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleScheduleCampaign = async () => {
+    if (!subject.trim() || !emailBody.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (!scheduleDate || !scheduleTime) {
+      toast.error("Please select date and time");
+      return;
+    }
+
+    const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`);
+    if (scheduledAt <= new Date()) {
+      toast.error("Scheduled time must be in the future");
+      return;
+    }
+
+    setIsScheduling(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      if (draftId) {
+        // Update existing campaign
+        const { error } = await supabase
+          .from("campaigns")
+          .update({
+            name: subject.substring(0, 50),
+            subject,
+            body: emailBody,
+            tone: selectedTone as "professional" | "friendly" | "urgent",
+            status: "scheduled",
+            scheduled_at: scheduledAt.toISOString(),
+            cta_text: ctaText || null,
+            cta_link: ctaLink || null,
+            image_url: imageUrl || null,
+          })
+          .eq("id", draftId);
+
+        if (error) throw error;
+      } else {
+        // Create new scheduled campaign
+        const { error } = await supabase
+          .from("campaigns")
+          .insert({
+            name: subject.substring(0, 50),
+            subject,
+            body: emailBody,
+            tone: selectedTone as "professional" | "friendly" | "urgent",
+            status: "scheduled",
+            user_id: user.id,
+            scheduled_at: scheduledAt.toISOString(),
+            cta_text: ctaText || null,
+            cta_link: ctaLink || null,
+            image_url: imageUrl || null,
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success(`Campaign scheduled for ${scheduledAt.toLocaleString()}`);
+      setShowScheduleDialog(false);
+      navigate("/drafts");
+    } catch (error: any) {
+      console.error("Error scheduling campaign:", error);
+      toast.error(error.message || "Failed to schedule campaign");
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -503,7 +637,11 @@ const CampaignBuilderPage = () => {
             {/* Actions */}
             <div className="flex items-center justify-between glass-card p-6 animate-slide-up" style={{ animationDelay: "400ms" }}>
               <div className="flex items-center gap-4">
-                <Button variant="outline" className="gap-2" disabled>
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => setShowScheduleDialog(true)}
+                >
                   <Clock size={16} />
                   Schedule for Later
                 </Button>
@@ -519,7 +657,7 @@ const CampaignBuilderPage = () => {
                       Saving...
                     </>
                   ) : (
-                    "Save as Draft"
+                    draftId ? "Update Draft" : "Save as Draft"
                   )}
                 </Button>
               </div>
@@ -563,6 +701,62 @@ const CampaignBuilderPage = () => {
           </div>
         </main>
       </div>
+
+      {/* Schedule Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Campaign</DialogTitle>
+            <DialogDescription>
+              Choose when you want this campaign to be sent.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Date</label>
+              <Input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Time</label>
+              <Input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="gradient"
+              onClick={handleScheduleCampaign}
+              disabled={isScheduling || !scheduleDate || !scheduleTime}
+              className="gap-2"
+            >
+              {isScheduling ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                <>
+                  <Clock size={16} />
+                  Schedule Campaign
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
