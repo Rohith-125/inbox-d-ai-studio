@@ -129,6 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
         `;
 
         // Send email via Resend
+        const senderName = fromName || "Inbox'd";
         const emailResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -136,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: fromEmail ? `${fromName || "Inbox'd"} <${fromEmail}>` : "Inbox'd <onboarding@resend.dev>",
+            from: fromEmail ? `${senderName} <${fromEmail}>` : `${senderName} <onboarding@resend.dev>`,
             to: [customer.email],
             subject: subject.replace(/\{\{name\}\}/g, customer.name || "Valued Customer"),
             html: htmlBody,

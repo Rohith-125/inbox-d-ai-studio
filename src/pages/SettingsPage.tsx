@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Moon, Sun, Key, Trash2, Camera, Loader2, User } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
@@ -33,6 +33,59 @@ const SettingsPage = () => {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url, username")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setAvatarUrl(data.avatar_url);
+        setUsername(data.username || "");
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  const handleSaveUsername = async () => {
+    if (!username.trim()) {
+      toast.error("Username cannot be empty");
+      return;
+    }
+
+    setIsSavingUsername(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ username: username.trim() })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      toast.success("Username updated");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update username");
+    } finally {
+      setIsSavingUsername(false);
+    }
+  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,7 +270,40 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            {/* Change Password */}
+            {/* Username */}
+            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "150ms" }}>
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <User size={20} className="text-primary" />
+                Username (Sender Name)
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This name will appear as the sender name in all your emails.
+              </p>
+              
+              <div className="flex items-center gap-4">
+                <Input
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Button
+                  variant="gradient"
+                  onClick={handleSaveUsername}
+                  disabled={isSavingUsername}
+                  className="gap-2"
+                >
+                  {isSavingUsername ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+              </div>
+            </div>
             <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
               <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Key size={20} className="text-primary" />
