@@ -82,13 +82,12 @@ Please reference this image/product naturally in the email body.`;
 Requirements:
 - Use {{name}} placeholder for personalization
 - Keep the email concise (150-250 words)
-- Include a clear call-to-action
 - Make it engaging and relevant to the subject
-- If CTA is provided, mention the button/link naturally
+- If CTA is provided, DO NOT include the link in the text body - the CTA button will be added separately
 - If image is provided, describe how it relates to the offer
 - End with a professional signature
 
-Only return the email body text, no subject line.`;
+Only return the email body text, no subject line. Do not include any links or URLs in the body text.`;
 
     console.log("Generating email with prompt:", prompt);
 

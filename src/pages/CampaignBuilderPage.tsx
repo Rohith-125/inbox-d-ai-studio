@@ -63,9 +63,11 @@ const CampaignBuilderPage = () => {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+  const [senderName, setSenderName] = useState("");
 
   useEffect(() => {
     fetchCustomers();
+    fetchUserProfile();
     
     // Load draft if passed from DraftsPage
     const draft = location.state?.draft as DraftData | undefined;
@@ -84,6 +86,26 @@ const CampaignBuilderPage = () => {
       }
     }
   }, [location.state]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data?.username) {
+        setSenderName(data.username);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -301,7 +323,7 @@ const CampaignBuilderPage = () => {
 
       toast.success(`Campaign scheduled for ${scheduledAt.toLocaleString()}`);
       setShowScheduleDialog(false);
-      navigate("/drafts");
+      navigate("/scheduled");
     } catch (error: any) {
       console.error("Error scheduling campaign:", error);
       toast.error(error.message || "Failed to schedule campaign");
@@ -351,6 +373,7 @@ const CampaignBuilderPage = () => {
           subject,
           body: emailBody,
           customerIds: selectedCustomers,
+          fromName: senderName || undefined,
           ctaText: ctaText || undefined,
           ctaLink: ctaLink || undefined,
           imageUrl: imageUrl || undefined,
@@ -659,6 +682,14 @@ const CampaignBuilderPage = () => {
                   ) : (
                     draftId ? "Update Draft" : "Save as Draft"
                   )}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate("/drafts")}
+                  className="gap-2"
+                >
+                  <FileText size={16} />
+                  View Drafts
                 </Button>
               </div>
 

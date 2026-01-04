@@ -1,12 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Send, Users, Settings, BarChart3, Zap, FileText } from "lucide-react";
+import { LayoutDashboard, Send, Users, Settings, BarChart3, Zap, Clock } from "lucide-react";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Send, label: "Campaigns", path: "/campaigns" },
-  { icon: FileText, label: "Drafts", path: "/drafts" },
+  { icon: Clock, label: "Scheduled", path: "/scheduled" },
   { icon: Users, label: "Subscribers", path: "/subscribers" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Zap, label: "Automations", path: "/automations" },

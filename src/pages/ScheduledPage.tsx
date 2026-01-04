@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Calendar, Edit, Trash2, Loader2, Send, ArrowLeft } from "lucide-react";
+import { Clock, Calendar, Edit, Trash2, Loader2, Send } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface Draft {
+interface ScheduledCampaign {
   id: string;
   name: string;
   subject: string;
@@ -32,29 +32,29 @@ interface Draft {
   image_url: string | null;
 }
 
-const DraftsPage = () => {
+const ScheduledPage = () => {
   const navigate = useNavigate();
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [campaigns, setCampaigns] = useState<ScheduledCampaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDrafts();
+    fetchScheduledCampaigns();
   }, []);
 
-  const fetchDrafts = async () => {
+  const fetchScheduledCampaigns = async () => {
     try {
       const { data, error } = await supabase
         .from("campaigns")
         .select("*")
-        .eq("status", "draft")
-        .order("created_at", { ascending: false });
+        .eq("status", "scheduled")
+        .order("scheduled_at", { ascending: true });
 
       if (error) throw error;
-      setDrafts(data || []);
+      setCampaigns(data || []);
     } catch (error) {
-      console.error("Error fetching drafts:", error);
-      toast.error("Failed to load drafts");
+      console.error("Error fetching scheduled campaigns:", error);
+      toast.error("Failed to load scheduled campaigns");
     } finally {
       setIsLoading(false);
     }
@@ -70,17 +70,17 @@ const DraftsPage = () => {
 
       if (error) throw error;
 
-      setDrafts(drafts.filter(d => d.id !== id));
-      toast.success("Draft deleted");
+      setCampaigns(campaigns.filter(c => c.id !== id));
+      toast.success("Scheduled campaign deleted");
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete draft");
+      toast.error(error.message || "Failed to delete campaign");
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleEdit = (draft: Draft) => {
-    navigate("/campaigns", { state: { draft } });
+  const handleEdit = (campaign: ScheduledCampaign) => {
+    navigate("/campaigns", { state: { draft: campaign } });
   };
 
   const formatDate = (dateString: string) => {
@@ -97,27 +97,20 @@ const DraftsPage = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
       <div className="ml-64">
-        <Header title="Saved Drafts" subtitle="Your saved campaign drafts" />
+        <Header title="Scheduled Campaigns" subtitle="View and manage your scheduled email campaigns" />
         
         <main className="p-6">
           <div className="max-w-4xl mx-auto">
-            <div className="mb-6">
-              <Button variant="ghost" onClick={() => navigate("/campaigns")} className="gap-2">
-                <ArrowLeft size={16} />
-                Back to Campaign Builder
-              </Button>
-            </div>
-
             {isLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : drafts.length === 0 ? (
+            ) : campaigns.length === 0 ? (
               <div className="glass-card p-12 text-center animate-slide-up">
-                <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">No drafts yet</h3>
+                <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">No scheduled campaigns</h3>
                 <p className="text-muted-foreground mb-6">
-                  Save a draft from the Campaign Builder to see it here.
+                  Schedule a campaign from the Campaign Builder to see it here.
                 </p>
                 <Button variant="gradient" onClick={() => navigate("/campaigns")} className="gap-2">
                   <Send size={16} />
@@ -126,9 +119,9 @@ const DraftsPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {drafts.map((draft, index) => (
+                {campaigns.map((campaign, index) => (
                   <div
-                    key={draft.id}
+                    key={campaign.id}
                     className="glass-card p-6 animate-slide-up"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -136,23 +129,25 @@ const DraftsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-semibold text-foreground truncate">
-                            {draft.subject}
+                            {campaign.subject}
                           </h3>
-                          <span className="px-2 py-1 text-xs rounded-full bg-secondary text-muted-foreground">
-                            Draft
+                          <span className="px-2 py-1 text-xs rounded-full bg-primary/20 text-primary">
+                            Scheduled
                           </span>
                         </div>
                         
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                          {draft.body || "No content yet..."}
+                          {campaign.body || "No content yet..."}
                         </p>
                         
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar size={12} />
-                            Created: {formatDate(draft.created_at)}
-                          </span>
-                          <span className="capitalize">Tone: {draft.tone}</span>
+                          {campaign.scheduled_at && (
+                            <span className="flex items-center gap-1 text-primary font-medium">
+                              <Calendar size={12} />
+                              Sends: {formatDate(campaign.scheduled_at)}
+                            </span>
+                          )}
+                          <span className="capitalize">Tone: {campaign.tone}</span>
                         </div>
                       </div>
                       
@@ -160,7 +155,7 @@ const DraftsPage = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEdit(draft)}
+                          onClick={() => handleEdit(campaign)}
                           className="gap-2"
                         >
                           <Edit size={14} />
@@ -179,19 +174,19 @@ const DraftsPage = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete draft?</AlertDialogTitle>
+                              <AlertDialogTitle>Cancel scheduled campaign?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete "{draft.subject}". This action cannot be undone.
+                                This will permanently delete "{campaign.subject}". This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(draft.id)}
+                                onClick={() => handleDelete(campaign.id)}
                                 className="bg-destructive hover:bg-destructive/90"
-                                disabled={deletingId === draft.id}
+                                disabled={deletingId === campaign.id}
                               >
-                                {deletingId === draft.id ? "Deleting..." : "Delete"}
+                                {deletingId === campaign.id ? "Deleting..." : "Delete"}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -209,4 +204,4 @@ const DraftsPage = () => {
   );
 };
 
-export default DraftsPage;
+export default ScheduledPage;

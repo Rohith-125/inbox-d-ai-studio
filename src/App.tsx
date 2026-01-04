@@ -10,6 +10,7 @@ import DashboardPage from "./pages/DashboardPage";
 import CampaignBuilderPage from "./pages/CampaignBuilderPage";
 import CustomersPage from "./pages/CustomersPage";
 import SettingsPage from "./pages/SettingsPage";
+import ScheduledPage from "./pages/ScheduledPage";
 import DraftsPage from "./pages/DraftsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -40,6 +41,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CampaignBuilderPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scheduled"
+              element={
+                <ProtectedRoute>
+                  <ScheduledPage />
                 </ProtectedRoute>
               }
             />
