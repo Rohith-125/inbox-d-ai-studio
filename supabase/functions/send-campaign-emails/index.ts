@@ -33,19 +33,60 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Validate the user's JWT token and get user ID
+    const token = authHeader.replace('Bearer ', '');
+    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        "apikey": supabaseAnonKey,
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      console.error("Failed to validate user token");
+      throw new Error("Unauthorized - invalid token");
+    }
+
+    const userData = await userResponse.json();
+    const userId = userData.id;
+
+    if (!userId) {
+      throw new Error("Unauthorized - no user ID");
+    }
+
+    console.log(`Authenticated user: ${userId}`);
 
     const { campaignId, subject, body, customerIds, fromEmail, fromName, ctaText, ctaLink, imageUrl }: SendCampaignRequest = await req.json();
 
     console.log(`Starting campaign ${campaignId} with ${customerIds.length} recipients`);
 
-    // Fetch customers using REST API
-    const customersResponse = await fetch(
-      `${supabaseUrl}/rest/v1/customers?id=in.(${customerIds.join(",")})&select=id,name,email`,
+    // Verify campaign belongs to authenticated user
+    const campaignResponse = await fetch(
+      `${supabaseUrl}/rest/v1/campaigns?id=eq.${encodeURIComponent(campaignId)}&user_id=eq.${encodeURIComponent(userId)}&select=id`,
       {
         headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseServiceKey,
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+      }
+    );
+
+    const campaigns = await campaignResponse.json();
+    if (!campaigns || campaigns.length === 0) {
+      console.error(`Campaign ${campaignId} not found or not owned by user ${userId}`);
+      throw new Error("Campaign not found or unauthorized");
+    }
+
+    // Fetch only customers that belong to the authenticated user
+    const customersResponse = await fetch(
+      `${supabaseUrl}/rest/v1/customers?id=in.(${customerIds.map(id => encodeURIComponent(id)).join(",")})&user_id=eq.${encodeURIComponent(userId)}&select=id,name,email`,
+      {
+        headers: {
+          "apikey": supabaseServiceKey,
+          "Authorization": `Bearer ${supabaseServiceKey}`,
         },
       }
     );
@@ -53,7 +94,12 @@ const handler = async (req: Request): Promise<Response> => {
     const customers = await customersResponse.json();
 
     if (!customers || customers.length === 0) {
-      throw new Error("No customers found");
+      throw new Error("No customers found or unauthorized access to customers");
+    }
+
+    // Log if some requested customers were filtered out due to ownership
+    if (customers.length < customerIds.length) {
+      console.warn(`Filtered out ${customerIds.length - customers.length} customers that don't belong to user ${userId}`);
     }
 
     console.log(`Found ${customers.length} customers to email`);
@@ -73,8 +119,8 @@ const handler = async (req: Request): Promise<Response> => {
           {
             method: "POST",
             headers: {
-              "apikey": supabaseKey,
-              "Authorization": `Bearer ${supabaseKey}`,
+              "apikey": supabaseServiceKey,
+              "Authorization": `Bearer ${supabaseServiceKey}`,
               "Content-Type": "application/json",
               "Prefer": "return=representation",
             },
@@ -157,8 +203,8 @@ const handler = async (req: Request): Promise<Response> => {
           {
             method: "PATCH",
             headers: {
-              "apikey": supabaseKey,
-              "Authorization": `Bearer ${supabaseKey}`,
+              "apikey": supabaseServiceKey,
+              "Authorization": `Bearer ${supabaseServiceKey}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -182,8 +228,8 @@ const handler = async (req: Request): Promise<Response> => {
       {
         method: "PATCH",
         headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseServiceKey,
+          "Authorization": `Bearer ${supabaseServiceKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
