@@ -216,7 +216,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      trigger_scheduled_campaigns: { Args: never; Returns: undefined }
     }
     Enums: {
       campaign_status: "draft" | "scheduled" | "sending" | "sent"

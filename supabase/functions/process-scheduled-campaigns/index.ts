@@ -7,9 +7,13 @@ const corsHeaders = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // This function is called by pg_cron, no auth header required
+  // It uses service role key internally for all database operations
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
