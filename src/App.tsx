@@ -12,6 +12,7 @@ import CustomersPage from "./pages/CustomersPage";
 import SettingsPage from "./pages/SettingsPage";
 import ScheduledPage from "./pages/ScheduledPage";
 import DraftsPage from "./pages/DraftsPage";
+import SentCampaignsPage from "./pages/SentCampaignsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CustomersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute>
+                  <SentCampaignsPage />
                 </ProtectedRoute>
               }
             />

@@ -12,6 +12,7 @@ interface GenerateEmailRequest {
   ctaText?: string;
   ctaLink?: string;
   imageDescription?: string;
+  senderName?: string;
 }
 
 serve(async (req) => {
@@ -47,7 +48,7 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { subject, tone, ctaText, ctaLink, imageDescription }: GenerateEmailRequest = await req.json();
+    const { subject, tone, ctaText, ctaLink, imageDescription, senderName }: GenerateEmailRequest = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -77,6 +78,8 @@ Image/Product Description: ${imageDescription}
 Please reference this image/product naturally in the email body.`;
     }
 
+    const signatureName = senderName || "Inbox'd";
+
     prompt += `
 
 Requirements:
@@ -85,7 +88,7 @@ Requirements:
 - Make it engaging and relevant to the subject
 - If CTA is provided, DO NOT include the link in the text body - the CTA button will be added separately
 - If image is provided, describe how it relates to the offer
-- End with a professional signature
+- End with a professional signature signed by "${signatureName}"
 
 Only return the email body text, no subject line. Do not include any links or URLs in the body text.`;
 
