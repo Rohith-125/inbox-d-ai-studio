@@ -58,6 +58,15 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
+        // Get user's profile for sender name
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", campaign.user_id)
+          .maybeSingle();
+
+        const senderName = profile?.username || "Inbox'd";
+
         // Update campaign status to sending
         await supabase
           .from("campaigns")
@@ -76,6 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
             subject: campaign.subject,
             body: campaign.body,
             customerIds: customers.map(c => c.id),
+            fromName: senderName,
             ctaText: campaign.cta_text,
             ctaLink: campaign.cta_link,
             imageUrl: campaign.image_url,
