@@ -183,6 +183,7 @@ const CampaignBuilderPage = () => {
           ctaText: ctaText || undefined,
           ctaLink: ctaLink || undefined,
           imageDescription: imageUrl ? "A promotional image/product banner is included" : undefined,
+          senderName: senderName || undefined,
         },
       });
 
