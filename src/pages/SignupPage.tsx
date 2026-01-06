@@ -10,7 +10,7 @@ import { Mail, Lock, User, Loader2 } from "lucide-react";
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -48,7 +48,7 @@ const SignupPage = () => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName,
+            username: username,
           },
         },
       });
@@ -139,15 +139,15 @@ const SignupPage = () => {
 
           <form onSubmit={handleSignup} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-foreground">Full Name</Label>
+              <Label htmlFor="username" className="text-foreground">Company Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="fullName"
+                  id="username"
                   type="text"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your Company Name"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
                   required
                 />
