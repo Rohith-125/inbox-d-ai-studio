@@ -114,7 +114,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="ml-64">
+      <div className="pl-4 pt-16">
         <Header title="Dashboard" subtitle="Welcome back! Here's your email performance overview." />
         
         <main className="p-6 space-y-6">

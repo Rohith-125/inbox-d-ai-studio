@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Send, Users, Settings, BarChart3, Zap, Clock, History } from "lucide-react";
+import { LayoutDashboard, Send, Users, Settings, BarChart3, Zap, Clock, History, Menu, X } from "lucide-react";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
 
@@ -16,54 +17,82 @@ const navItems = [
 
 const Sidebar = () => {
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-card/50 backdrop-blur-xl border-r border-border/50 flex flex-col z-50">
-      <div className="p-6 border-b border-border/50">
-        <Logo size="md" />
-      </div>
+    <>
+      {/* Hamburger Toggle Button - Always visible */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 left-4 z-[60] p-2 rounded-lg bg-card/80 backdrop-blur-xl border border-border/50 hover:bg-secondary/80 transition-all duration-200"
+        aria-label="Toggle sidebar"
+      >
+        {isOpen ? <X size={24} className="text-foreground" /> : <Menu size={24} className="text-foreground" />}
+      </button>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              )}
-            >
-              <item.icon size={20} />
-              {item.label}
-              {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
-              )}
-            </NavLink>
-          );
-        })}
-      </nav>
+      {/* Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
-      <div className="p-4 border-t border-border/50">
-        <div className="glass-card p-4 bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Zap size={16} className="text-primary" />
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 h-screen w-72 bg-card/95 backdrop-blur-xl border-r border-border/50 flex flex-col z-50 transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Header with Logo */}
+        <div className="p-6 pt-16 border-b border-border/50">
+          <Logo size="md" />
+        </div>
+
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                )}
+              >
+                <item.icon size={20} />
+                {item.label}
+                {isActive && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-border/50">
+          <div className="glass-card p-4 bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-primary/20">
+                <Zap size={16} className="text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Pro Plan</span>
             </div>
-            <span className="text-sm font-medium text-foreground">Pro Plan</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            5,000 emails remaining this month
-          </p>
-          <div className="mt-3 h-1.5 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full w-3/4 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
+            <p className="text-xs text-muted-foreground">
+              5,000 emails remaining this month
+            </p>
+            <div className="mt-3 h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div className="h-full w-3/4 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 
