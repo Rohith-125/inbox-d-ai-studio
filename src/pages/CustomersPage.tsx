@@ -108,14 +108,37 @@ const CustomersPage = () => {
         throw new Error("No valid customer data found in file");
       }
 
-      // Insert customers
+      // Get existing customer emails to filter duplicates
+      const { data: existingCustomers } = await supabase
+        .from("customers")
+        .select("email");
+      
+      const existingEmails = new Set(
+        (existingCustomers || []).map(c => c.email.toLowerCase())
+      );
+
+      // Filter out duplicates
+      const uniqueCustomers = customersToInsert.filter(
+        c => !existingEmails.has(c.email.toLowerCase())
+      );
+
+      if (uniqueCustomers.length === 0) {
+        toast.info("All customers in this file already exist");
+        return;
+      }
+
+      // Insert only unique customers
       const { error } = await supabase
         .from("customers")
-        .insert(customersToInsert);
+        .insert(uniqueCustomers);
 
       if (error) throw error;
 
-      toast.success(`Successfully imported ${customersToInsert.length} customers!`);
+      const skipped = customersToInsert.length - uniqueCustomers.length;
+      const message = skipped > 0 
+        ? `Imported ${uniqueCustomers.length} customers (${skipped} duplicates skipped)`
+        : `Successfully imported ${uniqueCustomers.length} customers!`;
+      toast.success(message);
       fetchCustomers();
     } catch (error: any) {
       console.error("Error uploading file:", error);
