@@ -12,6 +12,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -37,6 +38,12 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    // Set session persistence based on "Remember me" checkbox
+    await supabase.auth.setSession({
+      access_token: '',
+      refresh_token: ''
+    }).catch(() => {}); // Clear any existing session first
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -45,6 +52,13 @@ const LoginPage = () => {
     if (error) {
       toast.error(error.message);
     } else {
+      // Store remember me preference
+      if (rememberMe) {
+        localStorage.setItem('inbox_remember_me', 'true');
+      } else {
+        localStorage.removeItem('inbox_remember_me');
+        sessionStorage.setItem('inbox_session_only', 'true');
+      }
       toast.success("Welcome back to Inbox'd!");
     }
 
@@ -134,8 +148,13 @@ const LoginPage = () => {
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-muted-foreground">
-                  <input type="checkbox" className="rounded border-border" />
+                <label className="flex items-center gap-2 text-muted-foreground cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded border-border" 
+                  />
                   Remember me
                 </label>
                 <a href="#" className="text-primary hover:underline">

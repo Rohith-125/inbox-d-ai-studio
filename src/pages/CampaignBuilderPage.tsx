@@ -752,6 +752,7 @@ const CampaignBuilderPage = () => {
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
                 min={new Date().toISOString().split("T")[0]}
+                className="bg-background text-foreground border-border [color-scheme:dark] dark:[color-scheme:dark]"
               />
             </div>
             <div className="space-y-2">
@@ -760,6 +761,7 @@ const CampaignBuilderPage = () => {
                 type="time"
                 value={scheduleTime}
                 onChange={(e) => setScheduleTime(e.target.value)}
+                className="bg-background text-foreground border-border [color-scheme:dark] dark:[color-scheme:dark]"
               />
             </div>
           </div>
