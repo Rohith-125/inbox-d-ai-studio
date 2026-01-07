@@ -96,7 +96,7 @@ const DraftsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="ml-64">
+      <div className="pl-4 pt-16">
         <Header title="Saved Drafts" subtitle="Your saved campaign drafts" />
         
         <main className="p-6">

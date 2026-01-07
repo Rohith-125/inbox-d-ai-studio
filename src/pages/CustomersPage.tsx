@@ -219,7 +219,7 @@ const CustomersPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="ml-64">
+      <div className="pl-4 pt-16">
         <Header title="Customers" subtitle="Manage your customer list for email campaigns" />
         
         <main className="p-6">
