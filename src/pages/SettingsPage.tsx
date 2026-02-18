@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Moon, Sun, Key, Trash2, Camera, Loader2, User } from "lucide-react";
+import { Moon, Sun, Key, Trash2, Loader2, User } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -24,15 +24,11 @@ import {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [isSavingUsername, setIsSavingUsername] = useState(false);
 
@@ -53,7 +49,6 @@ const SettingsPage = () => {
 
       if (error) throw error;
       if (data) {
-        setAvatarUrl(data.avatar_url);
         setUsername(data.username || "");
       }
     } catch (error) {
@@ -142,56 +137,6 @@ const SettingsPage = () => {
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be less than 2MB");
-      return;
-    }
-
-    setIsUploadingAvatar(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("campaign-images")
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("campaign-images")
-        .getPublicUrl(fileName);
-
-      // Update profile with avatar URL
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      toast.success("Profile picture updated");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to upload image");
-    } finally {
-      setIsUploadingAvatar(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -227,51 +172,8 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            {/* Profile Picture */}
-            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Camera size={20} className="text-primary" />
-                Profile Picture
-              </h3>
-              
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-border">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={32} className="text-muted-foreground" />
-                    )}
-                  </div>
-                  {isUploadingAvatar && (
-                    <div className="absolute inset-0 bg-background/80 rounded-full flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleAvatarUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                  >
-                    Upload New Picture
-                  </Button>
-                  <p className="text-xs text-muted-foreground">JPG, PNG. Max 2MB.</p>
-                </div>
-              </div>
-            </div>
-
             {/* Username */}
-            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "150ms" }}>
+            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
               <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <User size={20} className="text-primary" />
                 Username (Sender Name)
