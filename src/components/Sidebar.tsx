@@ -75,22 +75,6 @@ const Sidebar = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border/50">
-          <div className="glass-card p-4 bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary/20">
-                <Zap size={16} className="text-primary" />
-              </div>
-              <span className="text-sm font-medium text-foreground">Pro Plan</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              5,000 emails remaining this month
-            </p>
-            <div className="mt-3 h-1.5 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full w-3/4 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
-            </div>
-          </div>
-        </div>
       </aside>
     </>
   );
