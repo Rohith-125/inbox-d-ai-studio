@@ -222,7 +222,12 @@ export type Database = {
       campaign_status: "draft" | "scheduled" | "sending" | "sent"
       email_event_type: "open" | "click"
       email_send_status: "pending" | "sent" | "delivered" | "bounced" | "failed"
-      email_tone: "professional" | "friendly" | "urgent"
+      email_tone:
+        | "professional"
+        | "friendly"
+        | "urgent"
+        | "benefit_driven"
+        | "announcement"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -353,7 +358,13 @@ export const Constants = {
       campaign_status: ["draft", "scheduled", "sending", "sent"],
       email_event_type: ["open", "click"],
       email_send_status: ["pending", "sent", "delivered", "bounced", "failed"],
-      email_tone: ["professional", "friendly", "urgent"],
+      email_tone: [
+        "professional",
+        "friendly",
+        "urgent",
+        "benefit_driven",
+        "announcement",
+      ],
     },
   },
 } as const
