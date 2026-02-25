@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText } from "lucide-react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +45,8 @@ const tones = [
   { value: "professional", label: "Professional", description: "Formal and business-appropriate", icon: "📊" },
   { value: "friendly", label: "Friendly", description: "Warm and conversational", icon: "😊" },
   { value: "urgent", label: "Urgent", description: "Time-sensitive and action-driven", icon: "⚡" },
+  { value: "benefit_driven", label: "Benefit Driven", description: "Highlight value and outcomes", icon: "🎯" },
+  { value: "announcement", label: "Announcement", description: "Big news and product launches", icon: "📢" },
 ];
 
 const CampaignBuilderPage = () => {
@@ -53,6 +62,7 @@ const CampaignBuilderPage = () => {
   const [ctaLink, setCtaLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isFetchingImage, setIsFetchingImage] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -205,6 +215,39 @@ const CampaignBuilderPage = () => {
     }
   };
 
+  const handleExtractImage = async () => {
+    if (!ctaLink.trim()) {
+      toast.error("Please enter a CTA link first");
+      return;
+    }
+
+    setIsFetchingImage(true);
+
+    try {
+      const response = await supabase.functions.invoke("extract-image", {
+        body: { url: ctaLink },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.imageUrl) {
+        setImageUrl(response.data.imageUrl);
+        toast.success("Product image extracted from link!");
+      } else {
+        toast.info("No product image found on that page. Try uploading manually.");
+      }
+    } catch (error: any) {
+      console.error("Error extracting image:", error);
+      toast.error("Could not extract image from link");
+    } finally {
+      setIsFetchingImage(false);
+    }
+  };
+
+
+
   const handleSaveDraft = async () => {
     if (!subject.trim()) {
       toast.error("Please enter a subject line");
@@ -225,7 +268,7 @@ const CampaignBuilderPage = () => {
             name: subject.substring(0, 50),
             subject,
             body: emailBody || "",
-            tone: selectedTone as "professional" | "friendly" | "urgent",
+            tone: selectedTone as any,
             cta_text: ctaText || null,
             cta_link: ctaLink || null,
             image_url: imageUrl || null,
@@ -242,7 +285,7 @@ const CampaignBuilderPage = () => {
             name: subject.substring(0, 50),
             subject,
             body: emailBody || "",
-            tone: selectedTone as "professional" | "friendly" | "urgent",
+            tone: selectedTone as any,
             status: "draft",
             user_id: user.id,
             cta_text: ctaText || null,
@@ -292,7 +335,7 @@ const CampaignBuilderPage = () => {
             name: subject.substring(0, 50),
             subject,
             body: emailBody,
-            tone: selectedTone as "professional" | "friendly" | "urgent",
+            tone: selectedTone as any,
             status: "scheduled",
             scheduled_at: scheduledAt.toISOString(),
             cta_text: ctaText || null,
@@ -310,7 +353,7 @@ const CampaignBuilderPage = () => {
             name: subject.substring(0, 50),
             subject,
             body: emailBody,
-            tone: selectedTone as "professional" | "friendly" | "urgent",
+            tone: selectedTone as any,
             status: "scheduled",
             user_id: user.id,
             scheduled_at: scheduledAt.toISOString(),
@@ -356,7 +399,7 @@ const CampaignBuilderPage = () => {
           name: subject.substring(0, 50),
           subject,
           body: emailBody,
-          tone: selectedTone as "professional" | "friendly" | "urgent",
+          tone: selectedTone as any,
           status: "sending",
           user_id: user.id,
           cta_text: ctaText || null,
@@ -563,23 +606,46 @@ const CampaignBuilderPage = () => {
                   </div>
                 </div>
               ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className={cn(
-                    "border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer transition-colors",
-                    "hover:border-primary/50 hover:bg-primary/5",
-                    isUploading && "pointer-events-none opacity-50"
+                <div className="space-y-4">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn(
+                      "border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer transition-colors",
+                      "hover:border-primary/50 hover:bg-primary/5",
+                      isUploading && "pointer-events-none opacity-50"
+                    )}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                    ) : (
+                      <Image className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      {isUploading ? "Uploading..." : "Click to upload an image or product banner"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
+                  </div>
+
+                  {ctaLink && (
+                    <Button
+                      variant="outline"
+                      onClick={handleExtractImage}
+                      disabled={isFetchingImage}
+                      className="w-full gap-2"
+                    >
+                      {isFetchingImage ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Extracting from link...
+                        </>
+                      ) : (
+                        <>
+                          <Globe size={16} />
+                          Auto-extract image from CTA link
+                        </>
+                      )}
+                    </Button>
                   )}
-                >
-                  {isUploading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                  ) : (
-                    <Image className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    {isUploading ? "Uploading..." : "Click to upload an image or product banner"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
                 </div>
               )}
             </div>
@@ -591,30 +657,22 @@ const CampaignBuilderPage = () => {
                 Email Tone
               </h2>
 
-              <div className="grid grid-cols-3 gap-3">
-                {tones.map((tone) => (
-                  <button
-                    key={tone.value}
-                    onClick={() => setSelectedTone(tone.value)}
-                    className={cn(
-                      "p-4 rounded-xl border transition-all duration-200 text-left",
-                      selectedTone === tone.value
-                        ? "border-primary bg-primary/10 shadow-lg glow-primary"
-                        : "border-border bg-secondary/30 hover:border-primary/30 hover:bg-secondary/50"
-                    )}
-                  >
-                    <div className="text-2xl mb-2">{tone.icon}</div>
-                    <p className="font-medium text-foreground">{tone.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{tone.description}</p>
-                    {selectedTone === tone.value && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-primary">
-                        <Check size={12} />
-                        Selected
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
+              <Select value={selectedTone} onValueChange={setSelectedTone}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tones.map((tone) => (
+                    <SelectItem key={tone.value} value={tone.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{tone.icon}</span>
+                        <span>{tone.label}</span>
+                        <span className="text-muted-foreground text-xs">— {tone.description}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Email Body Editor */}
@@ -716,7 +774,7 @@ const CampaignBuilderPage = () => {
             </div>
 
             {/* Preview Stats */}
-            <div className="grid grid-cols-3 gap-4 animate-slide-up" style={{ animationDelay: "500ms" }}>
+            <div className="grid grid-cols-2 gap-4 animate-slide-up" style={{ animationDelay: "500ms" }}>
               <div className="glass-card p-4 text-center">
                 <p className="text-2xl font-bold text-foreground">{selectedCustomers.length}</p>
                 <p className="text-sm text-muted-foreground">Recipients</p>
@@ -724,10 +782,6 @@ const CampaignBuilderPage = () => {
               <div className="glass-card p-4 text-center">
                 <p className="text-2xl font-bold text-accent">~68%</p>
                 <p className="text-sm text-muted-foreground">Est. Open Rate</p>
-              </div>
-              <div className="glass-card p-4 text-center">
-                <p className="text-2xl font-bold text-primary">~$2.4k</p>
-                <p className="text-sm text-muted-foreground">Est. Revenue</p>
               </div>
             </div>
           </div>

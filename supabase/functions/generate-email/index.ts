@@ -59,9 +59,11 @@ serve(async (req) => {
       professional: "formal, business-appropriate, and respectful",
       friendly: "warm, conversational, and approachable with occasional emojis",
       urgent: "time-sensitive, action-driven, and compelling with urgency markers",
+      benefit_driven: "focused on outcomes, value propositions, and tangible benefits the reader will gain",
+      announcement: "exciting, newsworthy, and celebratory — perfect for launches and big reveals",
     };
 
-    let prompt = `Generate a professional marketing email based on the following:
+    let prompt = `Generate a marketing email based on the following:
 
 Subject Line: ${subject}
 Tone: ${toneDescriptions[tone] || "professional"}`;
@@ -82,11 +84,18 @@ Please reference this image/product naturally in the email body.`;
 
     prompt += `
 
-Requirements:
-- Use {{name}} placeholder for personalization
-- Keep the email concise (150-250 words)
-- Make it engaging and relevant to the subject
-- If CTA is provided, DO NOT include the link in the text body - the CTA button will be added separately
+IMPORTANT — Use this exact three-part structure:
+
+**THE HOOK** (1 sentence): Open with a bold, specific statement that addresses a pain point or a surprising benefit. Example: "Your morning routine is costing you 2 hours."
+
+**THE BODY** (2-3 short sentences): Keep it scannable. Use **bold** on the single most important value proposition. People scan emails — they don't read them.
+
+**THE BRIDGE** (1 sentence): Connect the value directly to the CTA. Example: "Here is the tool to win that time back."
+
+Additional Requirements:
+- Use {{name}} placeholder for personalization in the hook
+- Keep the total email under 100 words
+- If CTA is provided, DO NOT include the link in the text body — the CTA button will be added separately
 - If image is provided, describe how it relates to the offer
 - End with a professional signature signed by "${signatureName}"
 

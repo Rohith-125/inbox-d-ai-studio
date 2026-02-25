@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, MousePointerClick, Users, TrendingUp, Zap, BarChart3, Loader2 } from "lucide-react";
+import { Mail, MousePointerClick, Users, TrendingUp, BarChart3, Loader2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import StatCard from "@/components/StatCard";
@@ -129,59 +129,9 @@ const DashboardPage = () => {
           <CampaignChart />
 
           {/* Bottom Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* AI Conversion Summary */}
-            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "300ms" }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/20">
-                  <Zap className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">AI Conversion Summary</h3>
-                  <p className="text-sm text-muted-foreground">Powered by machine learning</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Predicted Conversion Rate</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {isLoading ? "..." : `${(stats.clickRate * 0.15).toFixed(1)}%`}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-accent">AI optimized</p>
-                    <p className="text-xs text-muted-foreground">Based on click data</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg bg-secondary/30 text-center">
-                    <p className="text-xl font-bold text-foreground">
-                      {isLoading ? "..." : Math.round(stats.totalClicks * 0.12)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Est. Conversions</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-secondary/30 text-center">
-                    <p className="text-xl font-bold text-foreground">
-                      {isLoading ? "..." : `$${(stats.totalClicks * 2.5).toFixed(0)}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Est. Revenue</p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-muted-foreground italic">
-                  {stats.totalEmailsSent === 0 
-                    ? "Start sending campaigns to see AI-powered insights and predictions."
-                    : "Your best performing subject lines mention urgency and personalization. Consider A/B testing time-sensitive offers."
-                  }
-                </p>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 gap-6">
             {/* Total Volume */}
-            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "400ms" }}>
+            <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "300ms" }}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 rounded-xl bg-accent/20 border border-accent/20">
                   <BarChart3 className="h-6 w-6 text-accent" />
