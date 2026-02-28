@@ -38,12 +38,6 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Set session persistence based on "Remember me" checkbox
-    await supabase.auth.setSession({
-      access_token: '',
-      refresh_token: ''
-    }).catch(() => {}); // Clear any existing session first
-    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
