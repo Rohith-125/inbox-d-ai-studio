@@ -15,21 +15,25 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (session) {
-          navigate("/dashboard");
-        }
+    // Clear any stale/broken session to prevent infinite refresh loops
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.warn("Stale session detected, clearing...");
+        supabase.auth.signOut();
+        return;
       }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/dashboard");
       }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          navigate("/dashboard");
+        }
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -38,22 +42,26 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      // Store remember me preference
-      if (rememberMe) {
-        localStorage.setItem('inbox_remember_me', 'true');
+      if (error) {
+        toast.error(error.message);
       } else {
-        localStorage.removeItem('inbox_remember_me');
-        sessionStorage.setItem('inbox_session_only', 'true');
+        if (rememberMe) {
+          localStorage.setItem('inbox_remember_me', 'true');
+        } else {
+          localStorage.removeItem('inbox_remember_me');
+          sessionStorage.setItem('inbox_session_only', 'true');
+        }
+        toast.success("Welcome back to Inbox'd!");
       }
-      toast.success("Welcome back to Inbox'd!");
+    } catch (err) {
+      console.error("Login network error:", err);
+      toast.error("Network error. Please check your connection and try again.");
     }
 
     setIsLoading(false);
