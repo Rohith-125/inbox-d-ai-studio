@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -28,6 +28,7 @@ interface Customer {
   id: string;
   name: string;
   email: string;
+  tags: string[] | null;
 }
 
 interface DraftData {
@@ -74,6 +75,9 @@ const CampaignBuilderPage = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [senderName, setSenderName] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const lastClickedIndex = useRef<number | null>(null);
 
   useEffect(() => {
     fetchCustomers();
@@ -121,7 +125,7 @@ const CampaignBuilderPage = () => {
     try {
       const { data, error } = await supabase
         .from("customers")
-        .select("id, name, email")
+        .select("id, name, email, tags")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -132,6 +136,58 @@ const CampaignBuilderPage = () => {
     } finally {
       setIsLoadingCustomers(false);
     }
+  };
+
+  // Derive all unique tags
+  const allTags = Array.from(
+    new Set(customers.flatMap(c => c.tags || []))
+  ).sort();
+
+  // Filtered customers based on search + tag filters
+  const filteredCustomers = customers.filter(c => {
+    const matchesSearch = !customerSearch ||
+      c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+      c.email.toLowerCase().includes(customerSearch.toLowerCase());
+    const matchesTags = selectedTags.length === 0 ||
+      selectedTags.some(tag => c.tags?.includes(tag));
+    return matchesSearch && matchesTags;
+  });
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const selectFiltered = () => {
+    const filteredIds = filteredCustomers.map(c => c.id);
+    setSelectedCustomers(prev => {
+      const newSet = new Set(prev);
+      filteredIds.forEach(id => newSet.add(id));
+      return Array.from(newSet);
+    });
+  };
+
+  const deselectFiltered = () => {
+    const filteredIds = new Set(filteredCustomers.map(c => c.id));
+    setSelectedCustomers(prev => prev.filter(id => !filteredIds.has(id)));
+  };
+
+  const handleCustomerClick = (customerId: string, index: number, event: React.MouseEvent) => {
+    if (event.shiftKey && lastClickedIndex.current !== null) {
+      // Shift-click: select range
+      const start = Math.min(lastClickedIndex.current, index);
+      const end = Math.max(lastClickedIndex.current, index);
+      const rangeIds = filteredCustomers.slice(start, end + 1).map(c => c.id);
+      setSelectedCustomers(prev => {
+        const newSet = new Set(prev);
+        rangeIds.forEach(id => newSet.add(id));
+        return Array.from(newSet);
+      });
+    } else {
+      toggleCustomer(customerId);
+    }
+    lastClickedIndex.current = index;
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -489,37 +545,112 @@ const CampaignBuilderPage = () => {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-4">
-                    <Button variant="ghost" size="sm" onClick={toggleAllCustomers}>
-                      {selectedCustomers.length === customers.length ? "Deselect All" : "Select All"}
-                    </Button>
+                  {/* Search + Tag Filters */}
+                  <div className="space-y-3 mb-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name or email..."
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {allTags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Tag size={12} /> Filter by tag:
+                        </span>
+                        {allTags.map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => toggleTag(tag)}
+                            className={cn(
+                              "text-xs px-2.5 py-1 rounded-full border transition-colors",
+                              selectedTags.includes(tag)
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
+                            )}
+                          >
+                            {tag}
+                            {selectedTags.includes(tag) && <X size={10} className="inline ml-1" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selection Controls */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={toggleAllCustomers}>
+                        {selectedCustomers.length === customers.length ? "Deselect All" : "Select All"}
+                      </Button>
+                      {(customerSearch || selectedTags.length > 0) && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={selectFiltered} className="text-xs">
+                            Select Filtered ({filteredCustomers.length})
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={deselectFiltered} className="text-xs">
+                            Deselect Filtered
+                          </Button>
+                        </>
+                      )}
+                    </div>
                     <span className="text-sm text-muted-foreground">
                       {selectedCustomers.length} of {customers.length} selected
+                      {(customerSearch || selectedTags.length > 0) && (
+                        <span className="ml-1">· {filteredCustomers.length} shown</span>
+                      )}
                     </span>
                   </div>
+
+                  {/* Shift-click hint */}
+                  <p className="text-xs text-muted-foreground mb-2">
+                    💡 Hold <kbd className="px-1 py-0.5 rounded bg-secondary text-secondary-foreground text-[10px] font-mono">Shift</kbd> + click to select a range
+                  </p>
+
                   <div className="max-h-48 overflow-y-auto space-y-2">
-                    {customers.map((customer) => (
-                      <label
-                        key={customer.id}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
-                          selectedCustomers.includes(customer.id)
-                            ? "bg-primary/10 border border-primary/30"
-                            : "bg-secondary/30 hover:bg-secondary/50"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCustomers.includes(customer.id)}
-                          onChange={() => toggleCustomer(customer.id)}
-                          className="rounded border-border"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-foreground truncate">{customer.name}</p>
-                          <p className="text-sm text-muted-foreground truncate">{customer.email}</p>
-                        </div>
-                      </label>
-                    ))}
+                    {filteredCustomers.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-4">No subscribers match your filters.</p>
+                    ) : (
+                      filteredCustomers.map((customer, index) => (
+                        <label
+                          key={customer.id}
+                          onClick={(e) => { e.preventDefault(); handleCustomerClick(customer.id, index, e); }}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors select-none",
+                            selectedCustomers.includes(customer.id)
+                              ? "bg-primary/10 border border-primary/30"
+                              : "bg-secondary/30 hover:bg-secondary/50"
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedCustomers.includes(customer.id)}
+                            onChange={() => {}}
+                            className="rounded border-border pointer-events-none"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-foreground truncate">{customer.name}</p>
+                            <p className="text-sm text-muted-foreground truncate">{customer.email}</p>
+                          </div>
+                          {customer.tags && customer.tags.length > 0 && (
+                            <div className="flex gap-1 flex-shrink-0">
+                              {customer.tags.slice(0, 2).map(tag => (
+                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                                  {tag}
+                                </span>
+                              ))}
+                              {customer.tags.length > 2 && (
+                                <span className="text-[10px] text-muted-foreground">+{customer.tags.length - 2}</span>
+                              )}
+                            </div>
+                          )}
+                        </label>
+                      ))
+                    )}
                   </div>
                 </>
               )}
