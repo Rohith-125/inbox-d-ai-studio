@@ -4,6 +4,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import StatCard from "@/components/StatCard";
 import CampaignChart from "@/components/CampaignChart";
+import AIInsights from "@/components/AIInsights";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardStats {
@@ -127,6 +128,9 @@ const DashboardPage = () => {
 
           {/* Chart */}
           <CampaignChart />
+
+          {/* AI Insights */}
+          <AIInsights />
 
           {/* Bottom Section */}
           <div className="grid grid-cols-1 gap-6">
