@@ -255,6 +255,9 @@ const CampaignBuilderPage = () => {
         body: {
           subject,
           tone: selectedTone,
+          campaignType,
+          productName: productName || undefined,
+          productDescription: productDescription || undefined,
           ctaText: ctaText || undefined,
           ctaLink: ctaLink || undefined,
           imageDescription: imageUrl ? "A promotional image/product banner is included" : undefined,
