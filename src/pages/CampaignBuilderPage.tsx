@@ -65,6 +65,9 @@ const CampaignBuilderPage = () => {
   const [subject, setSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [selectedTone, setSelectedTone] = useState("professional");
+  const [campaignType, setCampaignType] = useState("marketing");
+  const [productName, setProductName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [ctaLink, setCtaLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
