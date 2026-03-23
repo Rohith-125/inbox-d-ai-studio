@@ -13,6 +13,9 @@ interface GenerateEmailRequest {
   ctaLink?: string;
   imageDescription?: string;
   senderName?: string;
+  campaignType?: "marketing" | "product_showcase" | "feedback_form";
+  productName?: string;
+  productDescription?: string;
 }
 
 serve(async (req) => {
@@ -48,7 +51,7 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { subject, tone, ctaText, ctaLink, imageDescription, senderName }: GenerateEmailRequest = await req.json();
+    const { subject, tone, ctaText, ctaLink, imageDescription, senderName, campaignType, productName, productDescription }: GenerateEmailRequest = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -63,26 +66,83 @@ serve(async (req) => {
       announcement: "exciting, newsworthy, and celebratory — perfect for launches and big reveals",
     };
 
-    let prompt = `Generate a marketing email based on the following:
+    let prompt = "";
+
+    if (campaignType === "feedback_form") {
+      prompt = `Generate a feedback/review request email for a product.
+
+Subject Line: ${subject}
+Tone: ${toneDescriptions[tone] || "professional"}
+${productName ? `Product Name: ${productName}` : ""}
+${productDescription ? `Product Description: ${productDescription}` : ""}
+
+IMPORTANT — Use this structure:
+
+**GREETING**: Address the customer warmly using {{name}} placeholder.
+
+**CONTEXT** (1-2 sentences): Remind them about the product they purchased/used. Be specific if product details are given.
+
+**THE ASK** (1-2 sentences): Ask for their honest feedback or review. Make it feel easy and quick — mention it takes only 1-2 minutes. Explain why their feedback matters (helps improve, helps other customers decide, etc.).
+
+**CLOSING**: Thank them for their time and support.
+
+Additional Requirements:
+- Keep the total email under 120 words
+- Use {{name}} placeholder for personalization
+- If CTA is provided, DO NOT include the link in the text body — the CTA button will be added separately
+- End with a professional signature signed by "${senderName || "Inbox'd"}"
+
+Only return the email body text, no subject line. Do not include any links or URLs in the body text.`;
+
+    } else if (campaignType === "product_showcase") {
+      prompt = `Generate a product showcase email to highlight and promote a product.
+
+Subject Line: ${subject}
+Tone: ${toneDescriptions[tone] || "professional"}
+${productName ? `Product Name: ${productName}` : ""}
+${productDescription ? `Product Description: ${productDescription}` : ""}
+
+IMPORTANT — Use this structure:
+
+**THE HOOK** (1 sentence): Open with a bold statement about the product that grabs attention. Address a need or desire.
+
+**PRODUCT HIGHLIGHT** (2-3 sentences): Showcase key features, benefits, or what makes this product special. Use **bold** on the single most compelling selling point. If product details are given, weave them in naturally.
+
+**SOCIAL PROOF / URGENCY** (1 sentence): Add a trust element — limited availability, customer love, or a compelling reason to act now.
+
+**THE BRIDGE** (1 sentence): Connect the value directly to the CTA.
+
+Additional Requirements:
+- Use {{name}} placeholder for personalization in the hook
+- Keep the total email under 120 words
+- If CTA is provided, DO NOT include the link in the text body — the CTA button will be added separately
+- If image is provided, describe how it relates to the product
+- End with a professional signature signed by "${senderName || "Inbox'd"}"
+
+Only return the email body text, no subject line. Do not include any links or URLs in the body text.`;
+
+    } else {
+      // Default marketing campaign
+      prompt = `Generate a marketing email based on the following:
 
 Subject Line: ${subject}
 Tone: ${toneDescriptions[tone] || "professional"}`;
 
-    if (ctaText && ctaLink) {
-      prompt += `
+      if (ctaText && ctaLink) {
+        prompt += `
 Call-to-Action Button Text: ${ctaText}
 Call-to-Action Link: ${ctaLink}`;
-    }
+      }
 
-    if (imageDescription) {
-      prompt += `
+      if (imageDescription) {
+        prompt += `
 Image/Product Description: ${imageDescription}
 Please reference this image/product naturally in the email body.`;
-    }
+      }
 
-    const signatureName = senderName || "Inbox'd";
+      const signatureName = senderName || "Inbox'd";
 
-    prompt += `
+      prompt += `
 
 IMPORTANT — Use this exact three-part structure:
 
@@ -100,6 +160,7 @@ Additional Requirements:
 - End with a professional signature signed by "${signatureName}"
 
 Only return the email body text, no subject line. Do not include any links or URLs in the body text.`;
+    }
 
     console.log("Generating email with prompt:", prompt);
 

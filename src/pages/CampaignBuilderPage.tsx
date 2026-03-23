@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X } from "lucide-react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X, Package, MessageSquare } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -42,6 +42,12 @@ interface DraftData {
   scheduled_at: string | null;
 }
 
+const campaignTypes = [
+  { value: "marketing", label: "Marketing Campaign", description: "Standard promotional email", icon: "📧" },
+  { value: "product_showcase", label: "Product Showcase", description: "Highlight a product with details & CTA", icon: "🛍️" },
+  { value: "feedback_form", label: "Feedback / Review Request", description: "Ask customers for product feedback", icon: "📝" },
+];
+
 const tones = [
   { value: "professional", label: "Professional", description: "Formal and business-appropriate", icon: "📊" },
   { value: "friendly", label: "Friendly", description: "Warm and conversational", icon: "😊" },
@@ -59,6 +65,9 @@ const CampaignBuilderPage = () => {
   const [subject, setSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [selectedTone, setSelectedTone] = useState("professional");
+  const [campaignType, setCampaignType] = useState("marketing");
+  const [productName, setProductName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [ctaLink, setCtaLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -246,6 +255,9 @@ const CampaignBuilderPage = () => {
         body: {
           subject,
           tone: selectedTone,
+          campaignType,
+          productName: productName || undefined,
+          productDescription: productDescription || undefined,
           ctaText: ctaText || undefined,
           ctaLink: ctaLink || undefined,
           imageDescription: imageUrl ? "A promotional image/product banner is included" : undefined,
@@ -656,7 +668,7 @@ const CampaignBuilderPage = () => {
               )}
             </div>
 
-            {/* Campaign Settings */}
+            {/* Campaign Type & Settings */}
             <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
               <h2 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
                 <Send size={20} className="text-primary" />
@@ -664,10 +676,75 @@ const CampaignBuilderPage = () => {
               </h2>
 
               <div className="space-y-4">
+                {/* Campaign Type Selector */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Campaign Type</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {campaignTypes.map((type) => (
+                      <button
+                        key={type.value}
+                        onClick={() => {
+                          setCampaignType(type.value);
+                          // Set smart defaults based on type
+                          if (type.value === "feedback_form" && !ctaText) {
+                            setCtaText("Leave a Review");
+                          } else if (type.value === "product_showcase" && !ctaText) {
+                            setCtaText("Shop Now");
+                          }
+                        }}
+                        className={cn(
+                          "p-3 rounded-lg border text-left transition-all",
+                          campaignType === type.value
+                            ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                            : "border-border bg-secondary/20 hover:bg-secondary/40"
+                        )}
+                      >
+                        <span className="text-lg">{type.icon}</span>
+                        <p className="text-sm font-medium text-foreground mt-1">{type.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{type.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Product Details (shown for product_showcase and feedback_form) */}
+                {(campaignType === "product_showcase" || campaignType === "feedback_form") && (
+                  <div className="space-y-4 p-4 rounded-lg border border-border/50 bg-secondary/10">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Package size={14} className="text-primary" />
+                      Product Details
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Product Name</label>
+                        <Input
+                          placeholder="e.g., Premium Headphones"
+                          value={productName}
+                          onChange={(e) => setProductName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Short Description</label>
+                        <Input
+                          placeholder="e.g., Noise-cancelling wireless headphones"
+                          value={productDescription}
+                          onChange={(e) => setProductDescription(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Subject Line</label>
                   <Input
-                    placeholder="Enter your email subject..."
+                    placeholder={
+                      campaignType === "feedback_form"
+                        ? "e.g., How's your experience with our product?"
+                        : campaignType === "product_showcase"
+                        ? "e.g., Introducing our latest product"
+                        : "Enter your email subject..."
+                    }
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                   />
