@@ -13,6 +13,9 @@ interface GenerateEmailRequest {
   ctaLink?: string;
   imageDescription?: string;
   senderName?: string;
+  campaignType?: "marketing" | "product_showcase" | "feedback_form";
+  productName?: string;
+  productDescription?: string;
 }
 
 serve(async (req) => {

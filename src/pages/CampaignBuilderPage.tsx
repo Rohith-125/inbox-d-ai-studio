@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X } from "lucide-react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X, Package, MessageSquare } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -41,6 +41,12 @@ interface DraftData {
   image_url: string | null;
   scheduled_at: string | null;
 }
+
+const campaignTypes = [
+  { value: "marketing", label: "Marketing Campaign", description: "Standard promotional email", icon: "📧" },
+  { value: "product_showcase", label: "Product Showcase", description: "Highlight a product with details & CTA", icon: "🛍️" },
+  { value: "feedback_form", label: "Feedback / Review Request", description: "Ask customers for product feedback", icon: "📝" },
+];
 
 const tones = [
   { value: "professional", label: "Professional", description: "Formal and business-appropriate", icon: "📊" },
