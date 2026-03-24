@@ -84,6 +84,7 @@ const CampaignBuilderPage = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [senderName, setSenderName] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const lastClickedIndex = useRef<number | null>(null);
