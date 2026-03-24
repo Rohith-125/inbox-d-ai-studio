@@ -486,6 +486,7 @@ const CampaignBuilderPage = () => {
           subject,
           body: emailBody,
           customerIds: selectedCustomers,
+          fromEmail: fromEmail || undefined,
           fromName: senderName || undefined,
           ctaText: ctaText || undefined,
           ctaLink: ctaLink || undefined,
