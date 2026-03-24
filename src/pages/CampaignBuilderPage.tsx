@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X, Package, MessageSquare } from "lucide-react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X, Package, MessageSquare, Mail } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -84,6 +84,7 @@ const CampaignBuilderPage = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [senderName, setSenderName] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const lastClickedIndex = useRef<number | null>(null);
@@ -485,6 +486,7 @@ const CampaignBuilderPage = () => {
           subject,
           body: emailBody,
           customerIds: selectedCustomers,
+          fromEmail: fromEmail || undefined,
           fromName: senderName || undefined,
           ctaText: ctaText || undefined,
           ctaLink: ctaLink || undefined,
@@ -734,6 +736,22 @@ const CampaignBuilderPage = () => {
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Mail size={14} />
+                    From Email
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="you@yourdomain.com"
+                    value={fromEmail}
+                    onChange={(e) => setFromEmail(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Must match your verified domain in Resend (e.g., hello@inboxd.com)
+                  </p>
+                </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Subject Line</label>
