@@ -738,6 +738,22 @@ const CampaignBuilderPage = () => {
                 )}
 
                 <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Mail size={14} />
+                    From Email
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="you@yourdomain.com"
+                    value={fromEmail}
+                    onChange={(e) => setFromEmail(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Must match your verified domain in Resend (e.g., hello@inboxd.com)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Subject Line</label>
                   <Input
                     placeholder={
