@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X, Package, MessageSquare } from "lucide-react";
+import { Send, Sparkles, Clock, Users, Zap, Loader2, Check, Upload, Image, Link, FileText, Globe, Search, Tag, X, Package, MessageSquare, Mail } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
