@@ -70,30 +70,48 @@ export type Database = {
       }
       customers: {
         Row: {
+          cart_status: Database["public"]["Enums"]["cart_status"] | null
           created_at: string
           customer_id: string | null
           email: string
+          engagement_level:
+            | Database["public"]["Enums"]["engagement_level"]
+            | null
           id: string
+          last_purchase_date: string | null
           name: string
           tags: string[] | null
+          total_purchases: number | null
           user_id: string
         }
         Insert: {
+          cart_status?: Database["public"]["Enums"]["cart_status"] | null
           created_at?: string
           customer_id?: string | null
           email: string
+          engagement_level?:
+            | Database["public"]["Enums"]["engagement_level"]
+            | null
           id?: string
+          last_purchase_date?: string | null
           name: string
           tags?: string[] | null
+          total_purchases?: number | null
           user_id: string
         }
         Update: {
+          cart_status?: Database["public"]["Enums"]["cart_status"] | null
           created_at?: string
           customer_id?: string | null
           email?: string
+          engagement_level?:
+            | Database["public"]["Enums"]["engagement_level"]
+            | null
           id?: string
+          last_purchase_date?: string | null
           name?: string
           tags?: string[] | null
+          total_purchases?: number | null
           user_id?: string
         }
         Relationships: []
@@ -220,6 +238,7 @@ export type Database = {
     }
     Enums: {
       campaign_status: "draft" | "scheduled" | "sending" | "sent"
+      cart_status: "empty" | "active" | "abandoned"
       email_event_type: "open" | "click"
       email_send_status: "pending" | "sent" | "delivered" | "bounced" | "failed"
       email_tone:
@@ -228,6 +247,7 @@ export type Database = {
         | "urgent"
         | "benefit_driven"
         | "announcement"
+      engagement_level: "new" | "active" | "inactive" | "vip"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -356,6 +376,7 @@ export const Constants = {
   public: {
     Enums: {
       campaign_status: ["draft", "scheduled", "sending", "sent"],
+      cart_status: ["empty", "active", "abandoned"],
       email_event_type: ["open", "click"],
       email_send_status: ["pending", "sent", "delivered", "bounced", "failed"],
       email_tone: [
@@ -365,6 +386,7 @@ export const Constants = {
         "benefit_driven",
         "announcement",
       ],
+      engagement_level: ["new", "active", "inactive", "vip"],
     },
   },
 } as const
