@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Upload, Users, Search, Trash2, Plus, Loader2 } from "lucide-react";
+import { Upload, Users, Search, Trash2, Plus, Loader2, ShoppingCart, Star } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
