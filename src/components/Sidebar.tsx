@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Send, Users, Settings, Clock, History, Menu, X } from "lucide-react";
+import { LayoutDashboard, Send, Users, Settings, Clock, History, Menu, X, Sparkles } from "lucide-react";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Send, label: "Campaigns", path: "/campaigns" },
+  { icon: Sparkles, label: "Personalization", path: "/personalization" },
   { icon: Clock, label: "Scheduled", path: "/scheduled" },
   { icon: History, label: "Sent History", path: "/history" },
   { icon: Users, label: "Subscribers", path: "/subscribers" },

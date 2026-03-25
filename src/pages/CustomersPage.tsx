@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Upload, Users, Search, Trash2, Plus, Loader2 } from "lucide-react";
+import { Upload, Users, Search, Trash2, Plus, Loader2, ShoppingCart, Star } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,24 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface Customer {
   id: string;
   customer_id: string | null;
   name: string;
   email: string;
   created_at: string;
+  cart_status: string | null;
+  last_purchase_date: string | null;
+  total_purchases: number | null;
+  engagement_level: string | null;
 }
 
 const CustomersPage = () => {
@@ -193,6 +205,23 @@ const CustomersPage = () => {
     }
   };
 
+  const handleUpdateBehavior = async (id: string, field: string, value: string) => {
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .update({ [field]: value } as any)
+        .eq("id", id);
+
+      if (error) throw error;
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
+      );
+      toast.success("Updated successfully");
+    } catch (error: any) {
+      toast.error("Failed to update");
+    }
+  };
+
   const handleDeleteCustomer = async (id: string) => {
     try {
       const { error } = await supabase
@@ -348,29 +377,58 @@ const CustomersPage = () => {
                   <table className="w-full">
                     <thead className="bg-secondary/30">
                       <tr>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">ID</th>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">Name</th>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">Email</th>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">Added</th>
-                        <th className="text-right px-6 py-3 text-sm font-medium text-muted-foreground">Actions</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Email</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Cart</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Engagement</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Purchases</th>
+                        <th className="text-right px-4 py-3 text-sm font-medium text-muted-foreground">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {filteredCustomers.map((customer) => (
                         <tr key={customer.id} className="hover:bg-secondary/20 transition-colors">
-                          <td className="px-6 py-4 text-sm text-muted-foreground">
-                            {customer.customer_id || "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm font-medium text-foreground">
+                          <td className="px-4 py-3 text-sm font-medium text-foreground">
                             {customer.name}
                           </td>
-                          <td className="px-6 py-4 text-sm text-foreground">
+                          <td className="px-4 py-3 text-sm text-foreground">
                             {customer.email}
                           </td>
-                          <td className="px-6 py-4 text-sm text-muted-foreground">
-                            {new Date(customer.created_at).toLocaleDateString()}
+                          <td className="px-4 py-3">
+                            <Select
+                              value={customer.cart_status || "empty"}
+                              onValueChange={(val) => handleUpdateBehavior(customer.id, "cart_status", val)}
+                            >
+                              <SelectTrigger className="h-7 text-xs w-28 bg-secondary/50 border-border/50">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="empty">Empty</SelectItem>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="abandoned">Abandoned</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-4 py-3">
+                            <Select
+                              value={customer.engagement_level || "new"}
+                              onValueChange={(val) => handleUpdateBehavior(customer.id, "engagement_level", val)}
+                            >
+                              <SelectTrigger className="h-7 text-xs w-24 bg-secondary/50 border-border/50">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="new">New</SelectItem>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                                <SelectItem value="vip">VIP</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {customer.total_purchases || 0}
+                          </td>
+                          <td className="px-4 py-3 text-right">
                             <Button
                               variant="ghost"
                               size="sm"
