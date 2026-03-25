@@ -360,29 +360,58 @@ const CustomersPage = () => {
                   <table className="w-full">
                     <thead className="bg-secondary/30">
                       <tr>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">ID</th>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">Name</th>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">Email</th>
-                        <th className="text-left px-6 py-3 text-sm font-medium text-muted-foreground">Added</th>
-                        <th className="text-right px-6 py-3 text-sm font-medium text-muted-foreground">Actions</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Email</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Cart</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Engagement</th>
+                        <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Purchases</th>
+                        <th className="text-right px-4 py-3 text-sm font-medium text-muted-foreground">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {filteredCustomers.map((customer) => (
                         <tr key={customer.id} className="hover:bg-secondary/20 transition-colors">
-                          <td className="px-6 py-4 text-sm text-muted-foreground">
-                            {customer.customer_id || "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm font-medium text-foreground">
+                          <td className="px-4 py-3 text-sm font-medium text-foreground">
                             {customer.name}
                           </td>
-                          <td className="px-6 py-4 text-sm text-foreground">
+                          <td className="px-4 py-3 text-sm text-foreground">
                             {customer.email}
                           </td>
-                          <td className="px-6 py-4 text-sm text-muted-foreground">
-                            {new Date(customer.created_at).toLocaleDateString()}
+                          <td className="px-4 py-3">
+                            <Select
+                              value={customer.cart_status || "empty"}
+                              onValueChange={(val) => handleUpdateBehavior(customer.id, "cart_status", val)}
+                            >
+                              <SelectTrigger className="h-7 text-xs w-28 bg-secondary/50 border-border/50">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="empty">Empty</SelectItem>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="abandoned">Abandoned</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-4 py-3">
+                            <Select
+                              value={customer.engagement_level || "new"}
+                              onValueChange={(val) => handleUpdateBehavior(customer.id, "engagement_level", val)}
+                            >
+                              <SelectTrigger className="h-7 text-xs w-24 bg-secondary/50 border-border/50">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="new">New</SelectItem>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                                <SelectItem value="vip">VIP</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {customer.total_purchases || 0}
+                          </td>
+                          <td className="px-4 py-3 text-right">
                             <Button
                               variant="ghost"
                               size="sm"
