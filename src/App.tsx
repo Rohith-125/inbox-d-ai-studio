@@ -14,6 +14,7 @@ import ScheduledPage from "./pages/ScheduledPage";
 import DraftsPage from "./pages/DraftsPage";
 import SentCampaignsPage from "./pages/SentCampaignsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import PersonalizationPage from "./pages/PersonalizationPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
