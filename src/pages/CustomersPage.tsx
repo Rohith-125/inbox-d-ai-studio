@@ -205,6 +205,23 @@ const CustomersPage = () => {
     }
   };
 
+  const handleUpdateBehavior = async (id: string, field: string, value: string) => {
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .update({ [field]: value } as any)
+        .eq("id", id);
+
+      if (error) throw error;
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
+      );
+      toast.success("Updated successfully");
+    } catch (error: any) {
+      toast.error("Failed to update");
+    }
+  };
+
   const handleDeleteCustomer = async (id: string) => {
     try {
       const { error } = await supabase
