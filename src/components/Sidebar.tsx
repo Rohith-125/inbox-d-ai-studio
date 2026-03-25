@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Send, Users, Settings, Clock, History, Menu, X } from "lucide-react";
+import { LayoutDashboard, Send, Users, Settings, Clock, History, Menu, X, Sparkles } from "lucide-react";
 import Logo from "./Logo";
 import { cn } from "@/lib/utils";
 
