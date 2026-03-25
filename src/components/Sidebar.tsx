@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Send, label: "Campaigns", path: "/campaigns" },
+  { icon: Sparkles, label: "Personalization", path: "/personalization" },
   { icon: Clock, label: "Scheduled", path: "/scheduled" },
   { icon: History, label: "Sent History", path: "/history" },
   { icon: Users, label: "Subscribers", path: "/subscribers" },

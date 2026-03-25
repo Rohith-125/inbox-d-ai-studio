@@ -63,6 +63,14 @@ const App = () => (
               }
             />
             <Route
+              path="/personalization"
+              element={
+                <ProtectedRoute>
+                  <PersonalizationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/subscribers"
               element={
                 <ProtectedRoute>
