@@ -7,12 +7,24 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface Customer {
   id: string;
   customer_id: string | null;
   name: string;
   email: string;
   created_at: string;
+  cart_status: string | null;
+  last_purchase_date: string | null;
+  total_purchases: number | null;
+  engagement_level: string | null;
 }
 
 const CustomersPage = () => {
