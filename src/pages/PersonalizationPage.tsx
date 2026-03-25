@@ -432,7 +432,7 @@ const PersonalizationPage = () => {
                   <Button
                     onClick={handleGenerate}
                     disabled={isGenerating || selectedCustomers.length === 0}
-                    className="w-full bg-gradient-to-r from-primary to-purple-500 hover:opacity-90"
+                    className="w-full bg-primary hover:bg-primary/90"
                   >
                     {isGenerating ? (
                       <>
